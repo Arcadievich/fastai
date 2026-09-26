@@ -122,3 +122,26 @@ $ make list
 - [Локальная инсталляция бэкенда](https://gitlab.dvmn.org/root/fastapi-articles/-/wikis/fastai/backend_local_installation.drawio.png)
 - [Prod инсталляция бэкенда](https://gitlab.dvmn.org/root/fastapi-articles/-/wikis/fastai/backend_prod_installation.drawio.png)
 - [Декомпозиция бэкенда по подсистемам](https://gitlab.dvmn.org/root/fastapi-articles/-/wikis/fastai/backend_decomposition.drawio.png)
+
+### Как подключить фронтенд к локальной инсталяции
+
+- Скачайте архив с [фронтендом](https://dvmn.org/filer/canonical/1750917110/1035/)
+- Папку `frontend` из архива положите в корень проекта
+- В папке `frontend` создайте файл `frontend-settings.json`, в котором укажите `backendBaseUrl`:
+
+```json
+{"backendBaseUrl": "localhost:8000"}
+```
+
+- В файле `src/main.py` подключите статику из папки frontend:
+
+```python
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+app = FastAPI()
+
+app.mount('/', StaticFiles(directory='frontend', html=True), name='frontend')
+```
+
+- Более подробную инструкцию можно открыть по [ссылке](https://dvmn.org/media/filer_public/a6/72/a6723390-983e-48df-b1ac-e2785682c671/readme.html)
