@@ -1,11 +1,26 @@
+from datetime import datetime
+
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, EmailStr, Field
 
 app = FastAPI()
 
 
-@app.get('/users/me', summary='Получить учетные данные пользователя')
+class UserDetailsResponse(BaseModel):
+    profileId: int
+    email: EmailStr
+    username: str = Field(max_length=254)
+    registeredAt: datetime
+    updatedAt: datetime
+    isActive: bool
+
+
+@app.get(
+        '/users/me',
+        summary='Получить учетные данные пользователя',
+        response_model=UserDetailsResponse,
+)
 def mock_get_user():
     mock_user_info = {
         'email': 'user_274@mail.ru',
@@ -16,7 +31,7 @@ def mock_get_user():
         'username': 'arcadievich',
     }
 
-    return JSONResponse(content=mock_user_info, status_code=200)
+    return mock_user_info
 
 
 app.mount('/', StaticFiles(directory='frontend', html=True), name='frontend')
