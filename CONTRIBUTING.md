@@ -72,6 +72,22 @@ pre-commit installed at .git/hooks/pre-commit
 git commit -m 'Message' --no-verify
 ```
 
+### Настройка переменных окружения
+
+Внутри репозитория создайте файл `.env`, скопируйте в него переменные из файла `example.env` и подставьте реальные значения.
+
+Убедитесь, что `.env` файл добавлен в `.gitignore`!
+
+Перечень переменных и способы их получения:
+- `DEBUG` - режим работы приложения, по умолчанию `True` (разработка)
+- `VSEGPT__API_TOKEN` - [VseGPT](https://vsegpt.ru/Docs/Models#h46-6) позволяет произвести оплату с карт РФ. (Регистрация и настройка)[https://gist.github.com/DevmanServices/f890a4efbab6bf5690809ded7404e82e]
+- `VSEGPT__URL` - URL нейросети (по умолчанию - `https://api.vsegpt.ru/v1`)
+- `VSEGPT__MODEL` - Если используете сервис как замену стандартного DeepSeek, то используйте `deepseek/deepseek-chat` как аналог официальной `deepseek-chat`
+- `VSEGPT__MAX_CONNECTIONS` - Максимальное количество одновременных подключений
+- `UNSPLASH__API_TOKEN` - Токен Unsplash. Зарегистрируйте аккаунт по (ссылке)[https://unsplash.com/documentation#creating-a-developer-account], создайте (demo-приложение)[https://unsplash.com/oauth/applications], скопируйте токен доступа(Access Key), как на (скриншоте)[https://dvmn.org/media/filer_public/de/2f/de2fe81a-6823-4d85-a9a5-0033675fd39a/screenshot.png]
+- `UNSPLASH__MAX_CONNECTIONS` - Максимальное количество одновременных подключений
+- `UNSPLASH__TIMEOUT` - Время ожидания подключения к Unsplash
+
 ## Как вести разработку
 
 Код проекта находится в папке `/src`.

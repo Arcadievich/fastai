@@ -1,11 +1,19 @@
 import asyncio
+import json
+import logging
+from contextlib import asynccontextmanager
 from datetime import datetime
+from itertools import count
 from pathlib import Path
 
-from fastapi import APIRouter, FastAPI
+import anyio
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from html_page_generator import AsyncDeepseekClient, AsyncPageGenerator, AsyncUnsplashClient
 from pydantic import BaseModel, EmailStr, Field
+
+from env_settings import app_settigns
 
 users_router = APIRouter(prefix='/frontend-api', tags=['Users'])
 sites_router = APIRouter(prefix='/frontend-api', tags=['Sites'])
@@ -21,7 +29,7 @@ class UserDetailsResponse(BaseModel):
 
 
 class CreateSiteRequest(BaseModel):
-    title: str
+    title: str | None = Field(default=None, max_length=128)
     prompt: str
 
 
@@ -48,12 +56,44 @@ SITE = SiteResponse(
     id=1,
     title='Фан клуб Домино',
     prompt='Сайт любителей играть в домино',
-    htmlCodeUrl='http://google.com',
+    htmlCodeUrl='http://dvmn.org',
     htmlCodeDownloadUrl='http://example.com/media/index.html?response-content-disposition=attachment',
     screenshotUrl='http://example.com/media/index.png',
     createdAt=datetime(2025, 6, 15, 18, 29, 56),
     updatedAt=datetime(2026, 6, 15, 18, 29, 56),
 )
+
+SITES: dict[int, dict] = {}
+_site_id_counter = count(1)
+
+logger = logging.getLogger('uvicorn.error')
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(
+        'Загруженные настройки:\n%s',
+        json.dumps(
+            app_settigns.model_dump(),
+            indent=2,
+            ensure_ascii=False,
+            default=str,
+        ),
+    )
+
+    async with (
+        AsyncUnsplashClient.setup(
+            app_settigns.unsplash.api_token.get_secret_value(),
+            timeout=app_settigns.unsplash.timeout,
+        ),
+        AsyncDeepseekClient.setup(
+            app_settigns.vsegpt.api_token.get_secret_value(),
+            app_settigns.vsegpt.url,
+            app_settigns.vsegpt.model,
+        ),
+    ):
+
+        yield
 
 
 async def async_stream_plug_html():
@@ -88,7 +128,18 @@ def mock_get_user():
     response_model=GeneratedSitesResponse,
 )
 def mock_get_my_sites():
-    return {'sites': [SITE]}
+    sites = []
+    for site_info in SITES.values():
+        sites.append(SiteResponse(
+            id=site_info['id'],
+            title=site_info['title'],
+            prompt=site_info['prompt'],
+            htmlCodeUrl='/generated_sites/index.html',
+            htmlCodeDownloadUrl='/generated_sites/index.html?response-content-disposition=attachment',
+            createdAt=site_info['createdAt'],
+            updatedAt=site_info['updatedAt'],
+        ))
+    return {'sites': sites}
 
 
 @sites_router.post(
@@ -97,12 +148,26 @@ def mock_get_my_sites():
     response_model=SiteResponse,
 )
 def mock_create_site(payload: CreateSiteRequest):
+    now = datetime.utcnow()
+    site_id = next(_site_id_counter)
+
+    initial_title = payload.title or ''
+
+    SITES[site_id] = {
+        'id': site_id,
+        'title': payload.title,
+        'prompt': payload.prompt,
+        'html': None,
+        'createdAt': now,
+        'updatedAt': now,
+    }
+
     return SiteResponse(
-        id=1,
-        title=payload.title,
+        id=site_id,
+        title=initial_title,
         prompt=payload.prompt,
-        createdAt=datetime(2026, 6, 15, 18, 29, 56),
-        updatedAt=datetime(2026, 6, 15, 18, 29, 56),
+        createdAt=now,
+        updatedAt=now,
     )
 
 
@@ -111,7 +176,38 @@ def mock_create_site(payload: CreateSiteRequest):
     summary='Сгенерировать HTML-код сайта',
 )
 async def mock_generate_site(site_id: int, payload: SiteGenerationRequest):
-    return StreamingResponse(async_stream_plug_html(), media_type='text/plain')
+    if site_id not in SITES:
+        raise HTTPException(status_code=404, detail='Site not found')
+
+    prompt = payload.prompt or SITES[site_id]['prompt']
+
+    async def stream_and_save():
+        generator = AsyncPageGenerator(debug_mode=app_settigns.debug)
+        chunks: list[str] = []
+
+        try:
+            async for chunk in generator(prompt):
+                if isinstance(chunk, list):
+                    text = ''.join(str(c) for c in chunk)
+                else:
+                    text = chunk
+
+                chunks.append(text)
+                yield text
+        finally:
+            with anyio.CancelScope(shield=True):
+                html = ''.join(chunks)
+                title = generator.html_page.title or SITES[site_id]['title']
+
+                output_path = Path('frontend/generated_sites') / 'index.html'
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text(html, encoding='utf-8')
+
+                SITES[site_id]['html'] = html
+                SITES[site_id]['title'] = title
+                SITES[site_id]['updatedAt'] = datetime.utcnow()
+
+    return StreamingResponse(stream_and_save(), media_type='text/plain')
 
 
 @sites_router.get(
@@ -120,10 +216,22 @@ async def mock_generate_site(site_id: int, payload: SiteGenerationRequest):
     response_model=SiteResponse,
 )
 def mock_get_site(site_id: int):
-    return SITE
+    if site_id not in SITES:
+        raise HTTPException(status_code=404, detail='Site not found')
+
+    site_info = SITES[site_id]
+    return SiteResponse(
+        id=site_info['id'],
+        title=site_info['title'],
+        prompt=site_info['prompt'],
+        htmlCodeUrl='/generated_sites/index.html',
+        htmlCodeDownloadUrl='/generated_sites/index.html?response-content-disposition=attachment',
+        createdAt=site_info['createdAt'],
+        updatedAt=site_info['updatedAt'],
+    )
 
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(users_router)
 app.include_router(sites_router)
