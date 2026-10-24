@@ -28,5 +28,8 @@ class AppSettings(BaseSettings):
     unsplash: UnsplashSettings
     debug: bool = False
 
+    minio_root_user: SecretStr
+    minio_root_password: SecretStr
+
 
 app_settigns = AppSettings()
