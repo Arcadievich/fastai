@@ -113,6 +113,8 @@ C:\Users\ваше_имя\go\bin\minio.exe server D:\minio-data --console-address
 .\mc.exe anonymous set download mylocal/<backet_name>
 ```
 
+Важно! В коде для загрузки файлов в бакет S3, в методе `put_object` необходимо указывать параметр `ContentDisposition` со значением `inline`, а также правильные MIME-типы в параметре `ContentType`
+
 Вручную положите файл `index.html` в бакет через [веб-интерфейс](http://127.0.0.1:9001)
 
 ### Настройка переменных окружения
@@ -137,6 +139,12 @@ C:\Users\ваше_имя\go\bin\minio.exe server D:\minio-data --console-address
 - `S3__CONNECT_TIMEOUT` - Время ожидания подключения к MinIO
 - `S3__READ_TIMEOUT` - Время ожидания чтения файла из бакета
 - `S3__MAX_CONNECTIONS` - Максимальное количество одновременных подключений
+- `GOTENBERG__API_URL` - Базовый url Gotenberg API
+- `GOTENBERG__WIDTH` - Ширина генерируемого скриншота
+- `GOTENBERG__FORMAT` - Формат файла скриншота
+- `GOTENBERG__MAX_CONNECTIONS` - Максимальное количество одновременных подключений
+- `GOTENBERG__TIMEOUT` - Время ожидания подключения к Gotenberg
+- `GOTENBERG__WAIT_DELAY` - Время ожидания завершения анимаций на html-странице. Важно: время ожидания завершения анимаций должно быть меньше таймаута асинхронного клиента, иначе библиотека всегда будет возвращать `TimeoutError`.
 
 ## Как вести разработку
 

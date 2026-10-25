@@ -90,9 +90,9 @@ async def lifespan(app: FastAPI):
 
 
 def build_s3_urls(key: str) -> tuple[str, str]:
-    base = f'{app_settigns.s3.endpoint_url}/{app_settigns.s3.bucket_name}/{key}'
-    download = f'{base}?response-content-disposition=attachment'
-    return base, download
+    base_url = f'{app_settigns.s3.endpoint_url}/{app_settigns.s3.bucket_name}/{key}'
+    download_url = f'{base_url}?response-content-disposition=attachment'
+    return base_url, download_url
 
 
 async def save_site_files_to_s3(html: str, site_id: int):
@@ -247,14 +247,15 @@ async def generate_site(site_id: int, payload: SiteGenerationRequest):
         chunks: list[str] = []
 
         try:
-            async for chunk in generator(prompt):
-                if isinstance(chunk, list):
-                    text = ''.join(str(c) for c in chunk)
-                else:
-                    text = chunk
+            with anyio.CancelScope(shield=True):
+                async for chunk in generator(prompt):
+                    if isinstance(chunk, list):
+                        text = ''.join(str(c) for c in chunk)
+                    else:
+                        text = chunk
 
-                chunks.append(text)
-                yield text
+                    chunks.append(text)
+                    yield text
         finally:
             with anyio.CancelScope(shield=True):
                 html = ''.join(chunks)
