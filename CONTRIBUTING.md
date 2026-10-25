@@ -74,7 +74,7 @@ git commit -m 'Message' --no-verify
 
 ### Установка и запуск MinIO
 
-- Установите язык GO в вашу систему с официального сайта. (Установщик для Windows)[https://dl.google.com/go/go1.27.3.windows-amd64.msi]. Откройте терминал и проверьте установку командой:
+- Установите язык GO в вашу систему с официального сайта. [Установщик для Windows](https://dl.google.com/go/go1.27.3.windows-amd64.msi). Откройте терминал и проверьте установку командой:
 
 ```bash
 go version
@@ -99,7 +99,7 @@ C:\Users\ваше_имя\go\bin\minio.exe server D:\minio-data --console-address
 - Создайте бакет используя интерфейс MinIO в браузере
 
 - Измените приватность созданного бакета:
-    - Скачайте `mc` (minio client) с github. (mc.exe для Windows)[https://github.com/minio/mc/releases/download/RELEASE.2025-08-13T08-35-41Z/mc.windows-amd64.RELEASE.2025-08-13T08-35-41Z.exe], (список всех версий)[https://github.com/minio/mc/releases/]
+    - Скачайте `mc` (minio client) с github. [mc.exe для Windows](https://github.com/minio/mc/releases/download/RELEASE.2025-08-13T08-35-41Z/mc.windows-amd64.RELEASE.2025-08-13T08-35-41Z.exe), [список всех версий](https://github.com/minio/mc/releases/)
     - Измените название файла на `mc.exe` и сохраните его в папку, например `C:\minio`
     - Настройте alias. Откройте `PowerShell` в папке с `mc.exe` и выполните следующую команду, чтобы сообщить `mc` адрес вашего сервера и учетные данные:
 
@@ -113,7 +113,7 @@ C:\Users\ваше_имя\go\bin\minio.exe server D:\minio-data --console-address
 .\mc.exe anonymous set download mylocal/<backet_name>
 ```
 
-Вручную положите файл `index.html` в бакет через (веб-интерфейс)[http://127.0.0.1:9001]
+Вручную положите файл `index.html` в бакет через [веб-интерфейс](http://127.0.0.1:9001)
 
 ### Настройка переменных окружения
 
