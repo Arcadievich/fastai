@@ -339,6 +339,7 @@ dependencies = [
     { name = "aioboto3" },
     { name = "editorconfig-checker" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "gotenberg-api" },
     { name = "html-page-generator" },
     { name = "pre-commit" },
     { name = "pydantic-settings" },
@@ -350,6 +351,7 @@ requires-dist = [
     { name = "aioboto3", specifier = ">=15.5.0" },
     { name = "editorconfig-checker", specifier = "==3.2.1" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.142.2" },
+    { name = "gotenberg-api", git = "https://github.com/devmanorg/gotenberg-api.git" },
     { name = "html-page-generator", git = "https://github.com/devmanorg/html-page-generator.git" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
@@ -513,6 +515,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8d/2b/6ce81972d5c8cab9705fddce3153be63222d9e12fd96f8baba5038a744dd/googleapis_common_protos-1.75.5.tar.gz", hash = "sha256:c7a866fc34ed29a3b10af627a4b9b1dc2433313ca6e959f0ae4feb132047ed72", size = 156513, upload-time = "2026-09-29T19:26:14.863Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/65/b9/6b29500a1c581ff4d77fd83c6568d068bee06f1b139fb6eb0a4f2d4bce8a/googleapis_common_protos-1.75.5-py3-none-any.whl", hash = "sha256:d7285525c23039db98f2463e6d5a4f9b958b94d497f03a844ece3259c4e72d5d", size = 307737, upload-time = "2026-09-29T19:25:48.735Z" },
+]
+
+[[package]]
+name = "gotenberg-api"
+version = "0.1.0"
+source = { git = "https://github.com/devmanorg/gotenberg-api.git#a463c4af85a603c07c41aff2b12ea6d3945ce245" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
 ]
 
 [[package]]

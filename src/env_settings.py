@@ -25,6 +25,15 @@ class S3Settings(BaseSettings):
     max_connections: int | None = Field(default=10, gt=0)
 
 
+class GotenbergSettings(BaseSettings):
+    api_url: str = 'https://demo.gotenberg.dev'
+    width: int = Field(default=1000, gt=0)
+    format: str = 'png'
+    max_connections: int = Field(default=5, gt=0)
+    timeout: int = Field(default=15)
+    wait_delay: int = Field(default=8, gt=0)
+
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
@@ -37,6 +46,7 @@ class AppSettings(BaseSettings):
     vsegpt: VseGPTSettings
     unsplash: UnsplashSettings
     s3: S3Settings
+    gotenberg: GotenbergSettings
     debug: bool = False
 
 
