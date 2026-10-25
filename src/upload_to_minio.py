@@ -36,8 +36,8 @@ async def upload_file_to_s3():
         async with session.client(
             's3',
             endpoint_url='http://127.0.0.1:9000',
-            aws_access_key_id=app_settigns.minio_root_user.get_secret_value(),
-            aws_secret_access_key=app_settigns.minio_root_password.get_secret_value(),
+            aws_access_key_id=app_settigns.s3.access_key.get_secret_value(),
+            aws_secret_access_key=app_settigns.s3.secret_key.get_secret_value(),
             config=config,
             region_name='us-east-1',
         ) as s3_client:  # pyright: ignore[reportGeneralTypeIssues]

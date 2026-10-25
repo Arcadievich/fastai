@@ -15,6 +15,16 @@ class UnsplashSettings(BaseSettings):
     timeout: int | None = Field(gt=0)
 
 
+class S3Settings(BaseSettings):
+    endpoint_url: str
+    access_key: SecretStr
+    secret_key: SecretStr
+    bucket_name: str
+    connect_timeout: int | None = Field(default=10, gt=0)
+    read_timeout: int | None = Field(default=10, gt=0)
+    max_connections: int | None = Field(default=10, gt=0)
+
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
@@ -26,10 +36,8 @@ class AppSettings(BaseSettings):
 
     vsegpt: VseGPTSettings
     unsplash: UnsplashSettings
+    s3: S3Settings
     debug: bool = False
-
-    minio_root_user: SecretStr
-    minio_root_password: SecretStr
 
 
 app_settigns = AppSettings()

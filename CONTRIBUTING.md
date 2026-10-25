@@ -72,6 +72,49 @@ pre-commit installed at .git/hooks/pre-commit
 git commit -m 'Message' --no-verify
 ```
 
+### Установка и запуск MinIO
+
+- Установите язык GO в вашу систему с официального сайта. (Установщик для Windows)[https://dl.google.com/go/go1.27.3.windows-amd64.msi]. Откройте терминал и проверьте установку командой:
+
+```bash
+go version
+```
+
+- Затем необходимо с помощью Go скомпилировать и установить MinIO из github репозитория командой:
+
+```bash
+go install github.com/minio/minio@latest
+```
+
+Эта команда загрузит исходный код, скомпилирует его и поместит `minio.exe` в каталог `bin` вашего `GOPATH` (обычно `C:\Users\ваше_имя\go\bin`).
+
+- Создайте сервер. Сначала создайте пустую папку для хранения данных, например `D:\minio-data`. Затем выполните:
+
+```bash
+C:\Users\ваше_имя\go\bin\minio.exe server D:\minio-data --console-address ":9001"
+```
+
+- Войдите в систему. После успешного запуска откройте в браузере `http://127.0.0.1:9001` и войдите, используя имя пользователя и пароль по умолчанию `minioadmin` / `minioadmin`.
+
+- Создайте бакет используя интерфейс MinIO в браузере
+
+- Измените приватность созданного бакета:
+    - Скачайте `mc` (minio client) с github. (mc.exe для Windows)[https://github.com/minio/mc/releases/download/RELEASE.2025-08-13T08-35-41Z/mc.windows-amd64.RELEASE.2025-08-13T08-35-41Z.exe], (список всех версий)[https://github.com/minio/mc/releases/]
+    - Измените название файла на `mc.exe` и сохраните его в папку, например `C:\minio`
+    - Настройте alias. Откройте `PowerShell` в папке с `mc.exe` и выполните следующую команду, чтобы сообщить `mc` адрес вашего сервера и учетные данные:
+
+```bash
+.\mc.exe alias set mylocal http://127.0.0.1:9000 minioadmin minioadmin
+```
+
+Установите публичный доступ к бакету следующей командой:
+
+```bash
+.\mc.exe anonymous set download mylocal/<backet_name>
+```
+
+Вручную положите файл `index.html` в бакет через (веб-интерфейс)[http://127.0.0.1:9001]
+
 ### Настройка переменных окружения
 
 Внутри репозитория создайте файл `.env`, скопируйте в него переменные из файла `example.env` и подставьте реальные значения.
@@ -87,6 +130,13 @@ git commit -m 'Message' --no-verify
 - `UNSPLASH__API_TOKEN` - Токен Unsplash. Зарегистрируйте аккаунт по (ссылке)[https://unsplash.com/documentation#creating-a-developer-account], создайте (demo-приложение)[https://unsplash.com/oauth/applications], скопируйте токен доступа(Access Key), как на (скриншоте)[https://dvmn.org/media/filer_public/de/2f/de2fe81a-6823-4d85-a9a5-0033675fd39a/screenshot.png]
 - `UNSPLASH__MAX_CONNECTIONS` - Максимальное количество одновременных подключений
 - `UNSPLASH__TIMEOUT` - Время ожидания подключения к Unsplash
+- `S3__ENDPOINT_URL` - Локальный адрес MinIO, запущенного на вашем компьютере
+- `S3__ACCESS_KEY` - Ваше имя пользователя в MinIO
+- `S3__SECRET_KEY` - Ваш пароль в MinIO
+- `S3__BUCKET_NAME` - Название вашего бакета в MinIO
+- `S3__CONNECT_TIMEOUT` - Время ожидания подключения к MinIO
+- `S3__READ_TIMEOUT` - Время ожидания чтения файла из бакета
+- `S3__MAX_CONNECTIONS` - Максимальное количество одновременных подключений
 
 ## Как вести разработку
 

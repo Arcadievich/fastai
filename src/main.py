@@ -6,7 +6,9 @@ from datetime import datetime
 from itertools import count
 from pathlib import Path
 
+import aioboto3
 import anyio
+from aiobotocore.config import AioConfig
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -52,17 +54,6 @@ class GeneratedSitesResponse(BaseModel):
     sites: list[SiteResponse]
 
 
-SITE = SiteResponse(
-    id=1,
-    title='Фан клуб Домино',
-    prompt='Сайт любителей играть в домино',
-    htmlCodeUrl='http://dvmn.org',
-    htmlCodeDownloadUrl='http://example.com/media/index.html?response-content-disposition=attachment',
-    screenshotUrl='http://example.com/media/index.png',
-    createdAt=datetime(2025, 6, 15, 18, 29, 56),
-    updatedAt=datetime(2026, 6, 15, 18, 29, 56),
-)
-
 SITES: dict[int, dict] = {}
 _site_id_counter = count(1)
 
@@ -80,6 +71,8 @@ async def lifespan(app: FastAPI):
             default=str,
         ),
     )
+
+    app.state.s3_session = aioboto3.Session()
 
     async with (
         AsyncUnsplashClient.setup(
@@ -122,6 +115,12 @@ def mock_get_user():
     return mock_user_info
 
 
+def build_s3_urls(key: str) -> tuple[str, str]:
+    base = f'{app_settigns.s3.endpoint_url}/{app_settigns.s3.bucket_name}/{key}'
+    download = f'{base}?response-content-disposition=attachment'
+    return base, download
+
+
 @sites_router.get(
     '/sites/my',
     summary='Получить список сгенерированных сайтов текущего пользователя',
@@ -130,12 +129,13 @@ def mock_get_user():
 def mock_get_my_sites():
     sites = []
     for site_info in SITES.values():
+        html_url, download_url = build_s3_urls('index.html')
         sites.append(SiteResponse(
             id=site_info['id'],
             title=site_info['title'],
             prompt=site_info['prompt'],
-            htmlCodeUrl='/generated_sites/index.html',
-            htmlCodeDownloadUrl='/generated_sites/index.html?response-content-disposition=attachment',
+            htmlCodeUrl=html_url,
+            htmlCodeDownloadUrl=download_url,
             createdAt=site_info['createdAt'],
             updatedAt=site_info['updatedAt'],
         ))
@@ -155,17 +155,20 @@ def mock_create_site(payload: CreateSiteRequest):
 
     SITES[site_id] = {
         'id': site_id,
-        'title': payload.title,
+        'title': initial_title,
         'prompt': payload.prompt,
         'html': None,
         'createdAt': now,
         'updatedAt': now,
     }
 
+    html_url, download_url = build_s3_urls('index.html')
     return SiteResponse(
         id=site_id,
         title=initial_title,
         prompt=payload.prompt,
+        htmlCodeUrl=html_url,
+        htmlCodeDownloadUrl=download_url,
         createdAt=now,
         updatedAt=now,
     )
@@ -199,9 +202,35 @@ async def mock_generate_site(site_id: int, payload: SiteGenerationRequest):
                 html = ''.join(chunks)
                 title = generator.html_page.title or SITES[site_id]['title']
 
-                output_path = Path('frontend/generated_sites') / 'index.html'
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(html, encoding='utf-8')
+                try:
+                    session: aioboto3.Session = app.state.s3_session
+                    s3 = app_settigns.s3
+                    config = AioConfig(
+                        max_pool_connections=s3.max_connections,
+                        connect_timeout=s3.connect_timeout,
+                        read_timeout=s3.read_timeout,
+                        proxies={},
+                    )
+                    async with session.client(
+                        's3',
+                        endpoint_url=s3.endpoint_url,
+                        aws_access_key_id=s3.access_key.get_secret_value(),
+                        aws_secret_access_key=s3.secret_key.get_secret_value(),
+                        config=config,
+                        region_name='us-east-1',
+                    ) as s3_client:  # pyright: ignore[reportGeneralTypeIssues]
+                        content_type = 'text/html'
+                        key = 'index.html'
+                        await s3_client.put_object(
+                            Bucket=s3.bucket_name,
+                            Key=key,
+                            Body=html.encode('utf-8'),
+                            ContentType=content_type,
+                            ContentDisposition='inline',
+                        )
+                        logger.info(f'HTML загружен в S3: {s3.bucket_name}/{key}')
+                except Exception as e:
+                    logger.error(f'Ошибка загрузки в S3: {e}')
 
                 SITES[site_id]['html'] = html
                 SITES[site_id]['title'] = title
@@ -220,12 +249,13 @@ def mock_get_site(site_id: int):
         raise HTTPException(status_code=404, detail='Site not found')
 
     site_info = SITES[site_id]
+    html_url, download_url = build_s3_urls('index.html')
     return SiteResponse(
         id=site_info['id'],
         title=site_info['title'],
         prompt=site_info['prompt'],
-        htmlCodeUrl='/generated_sites/index.html',
-        htmlCodeDownloadUrl='/generated_sites/index.html?response-content-disposition=attachment',
+        htmlCodeUrl=html_url,
+        htmlCodeDownloadUrl=download_url,
         createdAt=site_info['createdAt'],
         updatedAt=site_info['updatedAt'],
     )
