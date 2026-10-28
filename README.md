@@ -139,6 +139,12 @@ source ./venv/Scripts/activate
 fastapi dev src/main.py
 ```
 
+Пример успешного запуска в командной строке:
+<img width="1260" height="972" alt="fastai-example-1" src="https://github.com/user-attachments/assets/7735a0a2-9247-4b58-a123-50f5cf9e7833" />
+
+Пример успешного запуска в [браузере](http://127.0.0.1:8000)
+<img width="1915" height="986" alt="fastai-example-2" src="https://github.com/user-attachments/assets/75dff137-fc32-44c6-bb1c-a16b4577ee77" />
+
 ## Репозиторий для бэкенд-разработчиков.
 
 Инструкции и справочная информация по разворачиванию локальной инсталляции собраны
