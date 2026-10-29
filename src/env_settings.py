@@ -1,37 +1,37 @@
-from pydantic import Field, SecretStr
+from pydantic import AnyHttpUrl, PositiveInt, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class VseGPTSettings(BaseSettings):
     api_token: SecretStr
-    url: str
+    url: AnyHttpUrl
     model: str
-    max_connections: int | None = Field(default=None, gt=0)
+    max_connections: PositiveInt | None = 5
 
 
 class UnsplashSettings(BaseSettings):
     api_token: SecretStr
-    max_connections: int | None = Field(gt=0)
-    timeout: int | None = Field(gt=0)
+    max_connections: PositiveInt | None
+    timeout: PositiveInt | None
 
 
 class S3Settings(BaseSettings):
-    endpoint_url: str
+    endpoint_url: AnyHttpUrl
     access_key: SecretStr
     secret_key: SecretStr
     bucket_name: str
-    connect_timeout: int | None = Field(default=10, gt=0)
-    read_timeout: int | None = Field(default=10, gt=0)
-    max_connections: int | None = Field(default=10, gt=0)
+    connect_timeout: PositiveInt | None = 10
+    read_timeout: PositiveInt | None = 10
+    max_connections: PositiveInt | None = 10
 
 
 class GotenbergSettings(BaseSettings):
-    api_url: str = 'https://demo.gotenberg.dev'
-    width: int = Field(default=1000, gt=0)
+    api_url: AnyHttpUrl = AnyHttpUrl('https://demo.gotenberg.dev')
+    width: PositiveInt = 1000
     format: str = 'png'
-    max_connections: int = Field(default=5, gt=0)
-    timeout: int = Field(default=15)
-    wait_delay: int = Field(default=8, gt=0)
+    max_connections: PositiveInt = 5
+    timeout: PositiveInt = 15
+    wait_delay: PositiveInt = 8
 
 
 class AppSettings(BaseSettings):
